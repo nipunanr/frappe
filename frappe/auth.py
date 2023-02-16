@@ -184,7 +184,7 @@ class LoginManager:
 			frappe.local.cookie_manager.set_cookie("system_user", "no")
 			if not resume:
 				frappe.local.response["message"] = "No App"
-				frappe.local.response["home_page"] = "/" + get_home_page()
+				frappe.local.response["home_page"] = "/customerdashboard"
 		else:
 			frappe.local.cookie_manager.set_cookie("system_user", "yes")
 			if not resume:
