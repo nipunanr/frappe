@@ -31,6 +31,7 @@
 		<link type="text/css" rel="stylesheet" href="{{ theme.theme_url }}">
 		{%- else -%}
 		<link type="text/css" rel="stylesheet" href="/assets/css/frappe-web-b4.css?ver={{ build_version }}">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.2/css/jquery.dataTables.css">
 		{%- endif -%}
 
 		{%- for link in web_include_css %}
@@ -101,6 +102,7 @@
 	<script type="text/javascript" src="/assets/js/bootstrap-4-web.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
 	<script>
 		frappe.boot = {
 			sysdefaults: {

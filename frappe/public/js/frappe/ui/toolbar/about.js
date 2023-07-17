@@ -4,22 +4,22 @@ frappe.ui.misc.about = function() {
 		var d = new frappe.ui.Dialog({title: __('Frappe Framework')});
 
 		$(d.body).html(repl("<div>\
-		<p>"+__("Open Source Applications for the Web")+"</p>  \
+		<p>"+__("Professional Applications for the Web")+"</p>  \
 		<p><i class='fa fa-globe fa-fw'></i>\
-			Website: <a href='https://frappeframework.com' target='_blank'>https://frappeframework.com</a></p>\
+			Website: <a href='https://www.mislholdings.com' target='_blank'>https://www.mislholdings.com</a></p>\
 		<p><i class='fa fa-github fa-fw'></i>\
-			Source: <a href='https://github.com/frappe' target='_blank'>https://github.com/frappe</a></p>\
+			Source: <a href='https://github.com/misl-holdings' target='_blank'>https://github.com/misl-holdings</a></p>\
 		<p><i class='fa fa-linkedin fa-fw'></i>\
-			Linkedin: <a href='https://linkedin.com/company/frappe-tech' target='_blank'>https://linkedin.com/company/frappe-tech</a></p>\
+			Linkedin: <a href='https://linkedin.com/company/mislholdings' target='_blank'>https://linkedin.com/company/mislholdings</a></p>\
 		<p><i class='fa fa-facebook fa-fw'></i>\
-			Facebook: <a href='https://facebook.com/erpnext' target='_blank'>https://facebook.com/erpnext</a></p>\
+			Facebook: <a href='https://facebook.com/MISLHoldings' target='_blank'>https://facebook.com/MISLHoldings</a></p>\
 		<p><i class='fa fa-twitter fa-fw'></i>\
-			Twitter: <a href='https://twitter.com/erpnext' target='_blank'>https://twitter.com/erpnext</a></p>\
+			Twitter: <a href='https://twitter.com/mislholdings' target='_blank'>https://twitter.com/mislholdings</a></p>\
 		<hr>\
 		<h4>Installed Apps</h4>\
 		<div id='about-app-versions'>Loading versions...</div>\
 		<hr>\
-		<p class='text-muted'>&copy; Frappe Technologies Pvt. Ltd and contributors </p> \
+		<p class='text-muted'>&copy; MISL Holdings (Pvt) Ltd </p> \
 		</div>", frappe.app));
 
 		frappe.ui.misc.about_dialog = d;
