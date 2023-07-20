@@ -1290,7 +1290,6 @@ def validate_fields(meta):
 	not_allowed_in_list_view.append("Attach Image")
 	if meta.istable:
 		not_allowed_in_list_view.remove("Button")
-		not_allowed_in_list_view.remove("HTML")
 
 	for d in fields:
 		if not d.permlevel:

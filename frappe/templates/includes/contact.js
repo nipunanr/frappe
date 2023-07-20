@@ -28,14 +28,18 @@ frappe.ready(function() {
 			sender: email,
 			message: message,
 			callback: function(r) {
-				if (!r.exc) {
+				if(r.message==="okay") {
 					frappe.msgprint('{{ _("Thank you for your message") }}');
+				} else {
+					frappe.msgprint('{{ _("There were errors") }}');
+					console.log(r.exc);
 				}
 				$(':input').val('');
-			},
+			}
 		}, this);
 		return false;
 	});
+
 });
 
 var msgprint = function(txt) {

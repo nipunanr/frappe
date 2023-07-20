@@ -168,23 +168,14 @@ frappe.ui.form.on('User', {
 				});
 			}
 
-			if (
-				cint(frappe.boot.sysdefaults.enable_two_factor_auth) &&
-				(frappe.session.user == doc.name || frappe.user.has_role("System Manager"))
-			) {
-				frm.add_custom_button(
-					__("Reset OTP Secret"),
-					function () {
-						frappe.call({
-							method: "frappe.twofactor.reset_otp_secret",
-							args: {
-								user: frm.doc.name,
-							},
-						});
-					},
-					__("Password")
-				);
-			}
+			frm.add_custom_button(__("Reset OTP Secret"), function() {
+				frappe.call({
+					method: "frappe.twofactor.reset_otp_secret",
+					args: {
+						"user": frm.doc.name
+					}
+				});
+			}, __("Password"));
 
 			frm.trigger('enabled');
 

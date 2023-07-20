@@ -221,7 +221,6 @@ frappe.views.Calendar = Class.extend({
 		"start": "start",
 		"end": "end",
 		"allDay": "all_day",
-		"convertToUserTz": "convert_to_user_tz",
 	},
 	color_map: {
 		"danger": "red",
@@ -358,14 +357,12 @@ frappe.views.Calendar = Class.extend({
 				d[target] = d[source];
 			});
 
-			if (!me.field_map.allDay) d.allDay = 1;
-			if (!me.field_map.convertToUserTz) d.convertToUserTz = 1;
+			if(!me.field_map.allDay)
+				d.allDay = 1;
 
 			// convert to user tz
-			if (d.convertToUserTz) {
-				d.start = frappe.datetime.convert_to_user_tz(d.start);
-				d.end = frappe.datetime.convert_to_user_tz(d.end);
-			}
+			d.start = frappe.datetime.convert_to_user_tz(d.start);
+			d.end = frappe.datetime.convert_to_user_tz(d.end);
 
 			// show event on single day if start or end date is invalid
 			if (!frappe.datetime.validate(d.start) && d.end) {

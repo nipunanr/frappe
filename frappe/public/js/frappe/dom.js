@@ -34,28 +34,35 @@ frappe.dom = {
 	},
 	remove_script_and_style: function(txt) {
 		const evil_tags = ["script", "style", "noscript", "title", "meta", "base", "head"];
-		const parser = new DOMParser();
-		const doc = parser.parseFromString(txt, "text/html");
-		const body = doc.body;
-		let found = !!doc.head.innerHTML;
-
-		for (const tag of evil_tags) {
-			for (const element of body.getElementsByTagName(tag)) {
-				found = true;
-				element.parentNode.removeChild(element);
-			}
+		const regex = new RegExp(evil_tags.map(tag => `<${tag}>.*<\\/${tag}>`).join('|'), 's');
+		if (!regex.test(txt)) {
+			// no evil tags found, skip the DOM method entirely!
+			return txt;
 		}
 
-		for (const element of body.getElementsByTagName("link")) {
-			const relation = element.getAttribute("rel");
-			if (relation && relation.toLowerCase().trim() === "stylesheet") {
+		var div = document.createElement('div');
+		div.innerHTML = txt;
+		var found = false;
+		evil_tags.forEach(function(e) {
+			var elements = div.getElementsByTagName(e);
+			i = elements.length;
+			while (i--) {
 				found = true;
-				element.parentNode.removeChild(element);
+				elements[i].parentNode.removeChild(elements[i]);
+			}
+		});
+
+		// remove links with rel="stylesheet"
+		var elements = div.getElementsByTagName('link');
+		var i = elements.length;
+		while (i--) {
+			if (elements[i].getAttribute("rel")=="stylesheet"){
+				found = true;
+				elements[i].parentNode.removeChild(elements[i]);
 			}
 		}
-
-		if (found) {
-			return body.innerHTML;
+		if(found) {
+			return div.innerHTML;
 		} else {
 			// don't disturb
 			return txt;

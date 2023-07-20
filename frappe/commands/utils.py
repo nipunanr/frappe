@@ -17,11 +17,7 @@ from frappe.utils import cint, get_bench_path, update_progress_bar
 @click.command("build")
 @click.option("--app", help="Build assets for app")
 @click.option(
-	"--hard-link",
-	is_flag=True,
-	default=False,
-	help="Copy the files instead of symlinking",
-	envvar="FRAPPE_HARD_LINK_ASSETS",
+	"--hard-link", is_flag=True, default=False, help="Copy the files instead of symlinking"
 )
 @click.option(
 	"--make-copy",

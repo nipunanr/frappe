@@ -1,5 +1,7 @@
 .filter-icon.active {
-	--icon-stroke: var(--text-on-blue);
+	use {
+		stroke: var(--blue-500);
+	}
 }
 
 .filter-popover {
