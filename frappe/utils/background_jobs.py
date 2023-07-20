@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 import os
 import socket
 import time
@@ -28,11 +30,9 @@ def get_queues_timeout():
 	custom_workers_config = common_site_config.get("workers", {})
 	default_timeout = 300
 
-	# Note: Order matters here
-	# If no queues are specified then RQ prioritizes queues in specified order
 	return {
-		"short": default_timeout,
 		"default": default_timeout,
+		"short": default_timeout,
 		"long": 1500,
 		**{
 			worker: config.get("timeout", default_timeout)
@@ -125,7 +125,6 @@ def run_doc_method(doctype, name, doc_method, **kwargs):
 
 def execute_job(site, method, event, job_name, kwargs, user=None, is_async=True, retry=0):
 	"""Executes job in a worker, performs commit/rollback and logs if there is any error"""
-	retval = None
 	if is_async:
 		frappe.connect(site)
 		if os.environ.get("CI"):
@@ -140,11 +139,9 @@ def execute_job(site, method, event, job_name, kwargs, user=None, is_async=True,
 	else:
 		method_name = cstr(method.__name__)
 
-	for before_job_task in frappe.get_hooks("before_job"):
-		frappe.call(before_job_task, method=method_name, kwargs=kwargs, transaction_type="job")
-
+	frappe.monitor.start("job", method_name, kwargs)
 	try:
-		retval = method(**kwargs)
+		method(**kwargs)
 
 	except (frappe.db.InternalError, frappe.RetryBackgroundJobError) as e:
 		frappe.db.rollback()
@@ -175,12 +172,9 @@ def execute_job(site, method, event, job_name, kwargs, user=None, is_async=True,
 
 	else:
 		frappe.db.commit()
-		return retval
 
 	finally:
-		for after_job_task in frappe.get_hooks("after_job"):
-			frappe.call(after_job_task, method=method_name, kwargs=kwargs, result=retval)
-
+		frappe.monitor.stop()
 		if is_async:
 			frappe.destroy()
 
@@ -191,9 +185,6 @@ def start_worker(queue=None, quiet=False):
 		# empty init is required to get redis_queue from common_site_config.json
 		redis_connection = get_redis_conn()
 
-		if queue:
-			queue = [q.strip() for q in queue.split(",")]
-
 	if os.environ.get("CI"):
 		setup_loghandlers("ERROR")
 
@@ -202,11 +193,7 @@ def start_worker(queue=None, quiet=False):
 		logging_level = "INFO"
 		if quiet:
 			logging_level = "WARNING"
-		Worker(queues, name=get_worker_name(queue)).work(
-			logging_level=logging_level,
-			date_format="%Y-%m-%d %H:%M:%S",
-			log_format="%(asctime)s,%(msecs)03d %(message)s",
-		)
+		Worker(queues, name=get_worker_name(queue)).work(logging_level=logging_level)
 
 
 def get_worker_name(queue):

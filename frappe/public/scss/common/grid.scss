@@ -327,10 +327,6 @@
 	}
 }
 
-#freeze.grid-form {
-	z-index: 1020;
-}
-
 .recorder-form-in-grid {
 	z-index: 0;
 	@include base-grid();

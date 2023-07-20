@@ -14,25 +14,30 @@ from __future__ import print_function, unicode_literals
 import os
 import time
 
+# imports - third party imports
+import schedule
+
 # imports - module imports
 import frappe
 from frappe.core.doctype.user.user import STANDARD_USERS
 from frappe.installer import update_site_config
-from frappe.utils import cint, get_datetime, get_sites, now_datetime
+from frappe.utils import get_datetime, get_sites, now_datetime
 from frappe.utils.background_jobs import get_jobs
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def start_scheduler():
-	"""Run enqueue_events_for_all_sites based on scheduler tick.
+	"""Run enqueue_events_for_all_sites every 2 minutes (default).
 	Specify scheduler_interval in seconds in common_site_config.json"""
 
-	tick = cint(frappe.get_conf().scheduler_tick_interval) or 60
+	schedule.every(frappe.get_conf().scheduler_tick_interval or 60).seconds.do(
+		enqueue_events_for_all_sites
+	)
 
 	while True:
-		time.sleep(tick)
-		enqueue_events_for_all_sites()
+		schedule.run_pending()
+		time.sleep(1)
 
 
 def enqueue_events_for_all_sites():

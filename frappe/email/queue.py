@@ -409,6 +409,8 @@ def flush(from_test=False):
 		msgprint(_("Emails are muted"))
 		from_test = True
 
+	smtpserver_dict = frappe._dict()
+
 	try:
 		queued_jobs = set(get_jobs(site=frappe.local.site, key="job_name")[frappe.local.site])
 	except Exception:
@@ -422,8 +424,13 @@ def flush(from_test=False):
 		if email.name:
 			job_name = f"email_queue_sendmail_{email.name}"
 
+			smtpserver = smtpserver_dict.get(email.sender)
+			if not smtpserver:
+				smtpserver = SMTPServer()
+				smtpserver_dict[email.sender] = smtpserver
+
 			if from_test:
-				send_one(email.name, auto_commit)
+				send_one(email.name, smtpserver, auto_commit)
 			else:
 				if job_name in queued_jobs:
 					frappe.logger().debug(f"Not queueing job {job_name} because it is in queue already")
@@ -431,6 +438,7 @@ def flush(from_test=False):
 
 				send_one_args = {
 					"email": email.name,
+					"smtpserver": smtpserver,
 					"auto_commit": auto_commit,
 				}
 				enqueue(
@@ -626,8 +634,9 @@ def send_one(email, smtpserver=None, auto_commit=True, now=False):
 			print(frappe.get_traceback())
 			raise e
 
-		# log to Error Log
-		frappe.log_error(title="frappe.email.queue.flush")
+		else:
+			# log to Error Log
+			frappe.log_error("frappe.email.queue.flush")
 
 
 def prepare_message(email, recipient, recipients_list):
@@ -724,26 +733,33 @@ def prepare_message(email, recipient, recipients_list):
 
 
 def clear_outbox(days=None):
-	from frappe.query_builder import Interval
-	from frappe.query_builder.functions import Now
+	"""Remove low priority older than 31 days in Outbox or configured in Log Settings.
+	Note: Used separate query to avoid deadlock
+	"""
+	if not days:
+		days = 31
 
-	days = days or 31
-	email_queue = frappe.qb.DocType("Email Queue")
-	email_recipient = frappe.qb.DocType("Email Queue Recipient")
+	email_queues = frappe.db.sql_list(
+		"""SELECT `name` FROM `tabEmail Queue`
+		WHERE `priority`=0 AND `modified` < (NOW() - INTERVAL '{0}' DAY)""".format(
+			days
+		)
+	)
 
-	# Delete queue table
-	(
-		frappe.qb.from_(email_queue).delete().where(email_queue.modified < (Now() - Interval(days=days)))
-	).run()
+	if email_queues:
+		frappe.db.sql(
+			"""DELETE FROM `tabEmail Queue` WHERE `name` IN ({0})""".format(
+				",".join(["%s"] * len(email_queues))
+			),
+			tuple(email_queues),
+		)
 
-	# delete child tables, note that this has potential to leave some orphan
-	# child table behind if modified time was later than parent doc (rare).
-	# But it's safe since child table doesn't contain links.
-	(
-		frappe.qb.from_(email_recipient)
-		.delete()
-		.where(email_recipient.modified < (Now() - Interval(days=days)))
-	).run()
+		frappe.db.sql(
+			"""DELETE FROM `tabEmail Queue Recipient` WHERE `parent` IN ({0})""".format(
+				",".join(["%s"] * len(email_queues))
+			),
+			tuple(email_queues),
+		)
 
 
 def set_expiry_for_email_queue():

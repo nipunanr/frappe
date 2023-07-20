@@ -54,6 +54,9 @@ def application(request):
 
 		init_request(request)
 
+		frappe.recorder.record()
+		frappe.monitor.start()
+		frappe.rate_limiter.apply()
 		frappe.api.validate_auth()
 
 		if request.method == "OPTIONS":
@@ -90,18 +93,12 @@ def application(request):
 		rollback = after_request(rollback)
 
 	finally:
-		# Important note:
-		# this function *must* always return a response, hence any exception thrown outside of
-		# try..catch block like this finally block needs to be handled appropriately.
-
 		if request.method in ("POST", "PUT") and frappe.db and rollback:
 			frappe.db.rollback()
 
-		try:
-			run_after_request_hooks(request, response)
-		except Exception as e:
-			# We can not handle exceptions safely here.
-			frappe.logger().error("Failed to run after request hook", exc_info=True)
+		frappe.rate_limiter.update()
+		frappe.monitor.stop(response)
+		frappe.recorder.dump()
 
 		log_request(request, response)
 		process_response(response)
@@ -110,20 +107,12 @@ def application(request):
 	return response
 
 
-def run_after_request_hooks(request, response):
-	if not getattr(frappe.local, "initialised", False):
-		return
-
-	for after_request_task in frappe.get_hooks("after_request"):
-		frappe.call(after_request_task, response=response, request=request)
-
-
 def init_request(request):
 	frappe.local.request = request
 	frappe.local.is_ajax = frappe.get_request_header("X-Requested-With") == "XMLHttpRequest"
 
 	site = _site or request.headers.get("X-Frappe-Site-Name") or get_site_name(request.host)
-	frappe.init(site=site, sites_path=_sites_path, force=True)
+	frappe.init(site=site, sites_path=_sites_path)
 
 	if not (frappe.local.conf and frappe.local.conf.db_name):
 		# site does not exist
@@ -139,9 +128,6 @@ def init_request(request):
 
 	if request.method != "OPTIONS":
 		frappe.local.http_request = frappe.auth.HTTPRequest()
-
-	for before_request_task in frappe.get_hooks("before_request"):
-		frappe.call(before_request_task)
 
 
 def log_request(request, response):

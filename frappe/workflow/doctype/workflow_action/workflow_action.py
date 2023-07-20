@@ -334,9 +334,7 @@ def filter_allowed_users(users, doc, transition):
 
 	filtered_users = []
 	for user in users:
-		if has_approval_access(user, doc, transition) and has_permission(
-			doctype=doc, user=user, raise_exception=False
-		):
+		if has_approval_access(user, doc, transition) and has_permission(doctype=doc, user=user):
 			filtered_users.append(user)
 	return filtered_users
 

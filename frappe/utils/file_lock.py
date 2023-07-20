@@ -13,7 +13,7 @@ Use `frappe.utils.synchroniztion.filelock` for process synchroniztion.
 import os
 from time import time
 
-import frappe
+from frappe import _
 from frappe.utils import get_site_path, touch_file
 
 LOCKS_DIR = "locks"
@@ -64,9 +64,3 @@ def get_lock_path(name):
 	name = name.lower()
 	lock_path = get_site_path(LOCKS_DIR, name + ".lock")
 	return lock_path
-
-
-def release_document_locks():
-	"""Unlocks all documents that were locked by the current context."""
-	for doc in getattr(frappe.local, "locked_documents", []):
-		doc.unlock()

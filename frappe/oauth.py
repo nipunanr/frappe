@@ -3,7 +3,7 @@ import datetime
 import hashlib
 import re
 from http import cookies
-from urllib.parse import unquote, urljoin, urlparse
+from urllib.parse import unquote, urlparse
 
 import jwt
 import pytz
@@ -573,7 +573,7 @@ def get_userinfo(user):
 		if frappe.utils.validate_url(user.user_image, valid_schemes=valid_url_schemes):
 			picture = user.user_image
 		else:
-			picture = urljoin(frappe_server_url, user.user_image)
+			picture = frappe_server_url + "/" + user.user_image
 
 	userinfo = frappe._dict(
 		{

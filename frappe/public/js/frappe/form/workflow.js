@@ -91,7 +91,6 @@ frappe.ui.form.States = Class.extend({
 						// set the workflow_action for use in form scripts
 						me.frm.selected_workflow_action = d.action;
 						me.frm.script_manager.trigger('before_workflow_action').then(() => {
-							frappe.dom.freeze();
 							frappe.xcall('frappe.model.workflow.apply_workflow',
 								{doc: me.frm.doc, action: d.action})
 								.then((doc) => {
@@ -99,9 +98,6 @@ frappe.ui.form.States = Class.extend({
 									me.frm.refresh();
 									me.frm.selected_workflow_action = null;
 									me.frm.script_manager.trigger("after_workflow_action");
-								})
-								.finally(() => {
-									frappe.dom.unfreeze();
 								});
 						});
 					});

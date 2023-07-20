@@ -286,12 +286,23 @@ def get_context(context):
 						email_ids = email_ids_value.replace(",", "\n")
 						recipients = recipients + email_ids.split("\n")
 
-			cc.extend(get_emails_from_template(recipient.cc, context))
-			bcc.extend(get_emails_from_template(recipient.bcc, context))
+			if recipient.cc and "{" in recipient.cc:
+				recipient.cc = frappe.render_template(recipient.cc, context)
+
+			if recipient.cc:
+				recipient.cc = recipient.cc.replace(",", "\n")
+				cc = cc + recipient.cc.split("\n")
+
+			if recipient.bcc and "{" in recipient.bcc:
+				recipient.bcc = frappe.render_template(recipient.bcc, context)
+
+			if recipient.bcc:
+				recipient.bcc = recipient.bcc.replace(",", "\n")
+				bcc = bcc + recipient.bcc.split("\n")
 
 			# For sending emails to specified role
 			if recipient.receiver_by_role:
-				emails = get_info_based_on_role(recipient.receiver_by_role, "email", ignore_permissions=True)
+				emails = get_info_based_on_role(recipient.receiver_by_role, "email")
 
 				for email in emails:
 					recipients = recipients + email.split("\n")
@@ -443,17 +454,16 @@ def evaluate_alert(doc: Document, alert, event):
 			doc.reload()
 		alert.send(doc)
 	except TemplateError:
-		message = _("Error while evaluating Notification {0}. Please fix your template.").format(
-			frappe.utils.get_link_to_form("Notification", alert.name)
+		frappe.throw(
+			_("Error while evaluating Notification {0}. Please fix your template.").format(alert)
 		)
-		frappe.throw(message, title=_("Error in Notification"))
 	except Exception as e:
-		title = str(e)
-		message = frappe.get_traceback()
-		frappe.log_error(message=message, title=title)
-
-		msg = f"<details><summary>{title}</summary>{message}</details>"
-		frappe.throw(msg, title=_("Error in Notification"))
+		error_log = frappe.log_error(message=frappe.get_traceback(), title=str(e))
+		frappe.throw(
+			_("Error in Notification: {}").format(
+				frappe.utils.get_link_to_form("Error Log", error_log.name)
+			)
+		)
 
 
 def get_context(doc):
@@ -475,11 +485,3 @@ def get_assignees(doc):
 	recipients = [d.owner for d in assignees]
 
 	return recipients
-
-
-def get_emails_from_template(template, context):
-	if not template:
-		return ()
-
-	emails = frappe.render_template(template, context) if "{" in template else template
-	return filter(None, emails.replace(",", "\n").split("\n"))
