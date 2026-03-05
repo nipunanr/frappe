@@ -1,5 +1,16 @@
 // Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 
+// Returns the meta object whose states should be used for the given indicator field.
+// When indicator_field is a Link field, states are sourced from the linked DocType's meta.
+frappe.get_indicator_states_meta = function (doctype, indicator_fieldname) {
+	if (!indicator_fieldname) return frappe.get_meta(doctype);
+	let field_def = frappe.meta.get_docfield(doctype, indicator_fieldname);
+	if (field_def && field_def.fieldtype === "Link" && field_def.options) {
+		return frappe.get_meta(field_def.options) || frappe.get_meta(doctype);
+	}
+	return frappe.get_meta(doctype);
+};
+
 frappe.has_indicator = function (doctype) {
 	// returns true if indicator is present
 	if (frappe.model.is_submittable(doctype)) {
@@ -17,8 +28,11 @@ frappe.has_indicator = function (doctype) {
 	} else {
 		let meta = frappe.get_meta(doctype);
 		let indicator_fieldname = (meta && meta.indicator_field) || "status";
-		if (frappe.meta.has_field(doctype, indicator_fieldname) && meta.states.length) {
-			return true;
+		if (frappe.meta.has_field(doctype, indicator_fieldname)) {
+			let states_meta = frappe.get_indicator_states_meta(doctype, indicator_fieldname);
+			if (states_meta && states_meta.states && states_meta.states.length) {
+				return true;
+			}
 		}
 	}
 	return false;
@@ -40,6 +54,7 @@ frappe.get_indicator = function (doc, doctype, show_workflow_state) {
 	var is_submittable = frappe.model.is_submittable(doctype);
 	let workflow_fieldname = frappe.workflow.get_state_fieldname(doctype);
 	let indicator_fieldname = (meta && meta.indicator_field) || "status";
+	let indicator_states_meta = frappe.get_indicator_states_meta(doctype, indicator_fieldname);
 
 	let avoid_status_override = (frappe.workflow.avoid_status_override[doctype] || []).includes(
 		doc[workflow_fieldname]
@@ -82,8 +97,13 @@ frappe.get_indicator = function (doc, doctype, show_workflow_state) {
 
 	// based on document state
 	let indicator_value = doc[indicator_fieldname];
-	if (indicator_value && meta && meta.states && meta.states.find((d) => d.title === indicator_value)) {
-		let state = meta.states.find((d) => d.title === indicator_value);
+	if (
+		indicator_value &&
+		indicator_states_meta &&
+		indicator_states_meta.states &&
+		indicator_states_meta.states.find((d) => d.title === indicator_value)
+	) {
+		let state = indicator_states_meta.states.find((d) => d.title === indicator_value);
 		let color_class = frappe.scrub(state.color, "-");
 		return [__(indicator_value, null, doctype), color_class, indicator_fieldname + ",=," + indicator_value];
 	}
