@@ -363,6 +363,8 @@ class Meta(Document):
 		]
 		if self.title_field and self.title_field not in list_fields:
 			list_fields.append(self.title_field)
+		if self.indicator_field and self.indicator_field not in list_fields:
+			list_fields.append(self.indicator_field)
 		return list_fields
 
 	def get_custom_fields(self):

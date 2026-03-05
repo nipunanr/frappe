@@ -60,6 +60,7 @@
   "show_title_field_in_link",
   "translated_doctype",
   "search_fields",
+  "indicator_field",
   "default_print_format",
   "sort_field",
   "sort_order",
@@ -327,6 +328,13 @@
    "label": "Search Fields",
    "oldfieldname": "search_fields",
    "oldfieldtype": "Data"
+  },
+  {
+   "depends_on": "eval:!doc.istable",
+   "description": "Field to use for the list view indicator color. Defaults to \"status\" if not set.",
+   "fieldname": "indicator_field",
+   "fieldtype": "Data",
+   "label": "Indicator Field"
   },
   {
    "fieldname": "default_print_format",

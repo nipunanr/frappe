@@ -14,11 +14,12 @@ frappe.has_indicator = function (doctype) {
 		frappe.meta.has_field(doctype, "disabled")
 	) {
 		return true;
-	} else if (
-		frappe.meta.has_field(doctype, "status") &&
-		frappe.get_meta(doctype).states.length
-	) {
-		return true;
+	} else {
+		let meta = frappe.get_meta(doctype);
+		let indicator_fieldname = (meta && meta.indicator_field) || "status";
+		if (frappe.meta.has_field(doctype, indicator_fieldname) && meta.states.length) {
+			return true;
+		}
 	}
 	return false;
 };
@@ -38,6 +39,7 @@ frappe.get_indicator = function (doc, doctype, show_workflow_state) {
 
 	var is_submittable = frappe.model.is_submittable(doctype);
 	let workflow_fieldname = frappe.workflow.get_state_fieldname(doctype);
+	let indicator_fieldname = (meta && meta.indicator_field) || "status";
 
 	let avoid_status_override = (frappe.workflow.avoid_status_override[doctype] || []).includes(
 		doc[workflow_fieldname]
@@ -79,10 +81,11 @@ frappe.get_indicator = function (doc, doctype, show_workflow_state) {
 	}
 
 	// based on document state
-	if (doc.status && meta && meta.states && meta.states.find((d) => d.title === doc.status)) {
-		let state = meta.states.find((d) => d.title === doc.status);
+	let indicator_value = doc[indicator_fieldname];
+	if (indicator_value && meta && meta.states && meta.states.find((d) => d.title === indicator_value)) {
+		let state = meta.states.find((d) => d.title === indicator_value);
 		let color_class = frappe.scrub(state.color, "-");
-		return [__(doc.status, null, doctype), color_class, "status,=," + doc.status];
+		return [__(indicator_value, null, doctype), color_class, indicator_fieldname + ",=," + indicator_value];
 	}
 
 	if (settings.get_indicator) {
@@ -95,12 +98,12 @@ frappe.get_indicator = function (doc, doctype, show_workflow_state) {
 		return [__("Submitted", null, doctype), "blue", "docstatus,=,1"];
 	}
 
-	// based on status
-	if (doc.status) {
+	// based on status (or configured indicator field)
+	if (indicator_value) {
 		return [
-			__(doc.status, null, doctype),
-			frappe.utils.guess_colour(doc.status),
-			"status,=," + doc.status,
+			__(indicator_value, null, doctype),
+			frappe.utils.guess_colour(indicator_value),
+			indicator_fieldname + ",=," + indicator_value,
 		];
 	}
 
